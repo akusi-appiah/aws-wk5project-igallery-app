@@ -1,0 +1,1 @@
+export type image = { key: string; url: string }; // Type for image URL

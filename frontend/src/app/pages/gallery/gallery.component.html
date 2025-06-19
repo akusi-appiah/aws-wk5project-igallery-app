@@ -2,7 +2,7 @@
 
 <!-- Upload control -->
 <div class="upload-container">
-  <input type="file" accept="image/*" (change)="onFile($event)" />
+  <input type="file" accept="image/*" (change)="onFile($event)"/>
   <button (click)="upload()" [disabled]="loading || !selectedFile">
     Upload
   </button>
@@ -11,10 +11,17 @@
 <div class="upload-view-container">
   @if(displayImageUrl){
     <div class="preview">
-        <h3>Selected Image</h3>
-        <img [src]="displayImageUrl" alt="Selected" />
+        <img [src]="displayImageUrl" class="preview-img" alt="Selected" />
     </div>
   }
+</div>
+<div class="display-description">
+    @if (displayImageUrl) {
+        <div class="display-img-container">
+            <span>viewing:  {{selectedImageUrl}}</span>
+            <button (click)="displayImageUrl = ''">❌</button>
+        </div>
+    }
 </div>
 
 
@@ -40,11 +47,11 @@
             @for(img of images; track img.key) {
                 <tr>
                     <td>
-                        <img [src]="img.url" class="thumb-img" alt="thumb" />
+                        <img [src]="img.url" alt="thumb" />
                     </td>
                     <td>{{ img.key }}</td>
                     <td>
-                        <a href="#" (click)="viewImage(img.url); $event.preventDefault()">View</a>
+                        <a href="#" (click)="viewImage(img); $event.preventDefault()">View</a>
                         |
                         <button (click)="delete(img.key)" [disabled]="loading">Delete</button>
                     </td>

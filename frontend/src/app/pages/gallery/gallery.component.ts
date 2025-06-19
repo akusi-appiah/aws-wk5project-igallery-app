@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ImageService, ImageListResponse } from '../../services/image.service';
 import { CommonModule } from '@angular/common';
+import { image } from '../../types/image.types';
 
 @Component({
   selector: 'app-gallery',
@@ -12,7 +13,7 @@ import { CommonModule } from '@angular/common';
 
 
 export class GalleryComponent implements OnInit {
-  images: { key: string; url: string }[] = [];
+  images: image[] = [];
   nextToken?: string;
   prevTokens: string[] = [];
   loading = false;
@@ -20,6 +21,7 @@ export class GalleryComponent implements OnInit {
   selectedFile?: File;
   uploadedUrl = '';
   displayImageUrl: string | null = null;
+  selectedImageUrl: string  = '';
 
 
   constructor(private readonly imageService: ImageService) {}
@@ -64,6 +66,7 @@ export class GalleryComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
       this.selectedFile = input.files[0];
+      this.selectedImageUrl=this.selectedFile.webkitRelativePath
     }
   }
 
@@ -99,8 +102,14 @@ export class GalleryComponent implements OnInit {
     }
   }
 
-  viewImage(url: string) {
-    this.displayImageUrl = url;
+  viewImage(url:image) {
+    this.displayImageUrl = url.url;
+    this.selectedImageUrl = url.key.substring(8); // Remove 'upload/' prefix
+  }
+
+  clearImageDescription() {
+    this.displayImageUrl = null;
+    this.selectedImageUrl = "";
   }
 }
 

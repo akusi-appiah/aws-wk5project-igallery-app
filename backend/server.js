@@ -1,5 +1,7 @@
 // server.js
 require("dotenv").config();
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const { GetObjectCommand } = require('@aws-sdk/client-s3');
 const express = require("express");
 const cors = require("cors");
 const {S3Client,
@@ -48,10 +50,14 @@ ensureBucket(BUCKET)
         });
         const data = await s3Client.send(cmd);
 
-        const images = (data.Contents || []).map((item) => ({
-          key: item.Key,
-          url: `https://${BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${item.Key}`,
-        }));
+        // Generate signed URLs for each image
+        const images = await Promise.all(
+          (data.Contents || []).map(async item => {
+              const cmd1 = new GetObjectCommand({ Bucket: BUCKET, Key: item.Key });
+              const url = await getSignedUrl(s3Client, cmd1, { expiresIn: 3600 });
+              return { key: item.Key, url };
+            })
+        );
 
         res.json({
           images,
