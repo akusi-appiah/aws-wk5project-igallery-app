@@ -1,0 +1,123 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 2rem;
+  background: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header-container {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+
+.preview {
+  margin-top: 1rem;
+  text-align: center;
+}
+.preview img {
+  max-width: 100%;
+  max-height: 300px;
+  border: 1px solid #ddd;
+}
+
+.thumb-img {
+  width: 100px;              /* consistent thumbnail width */
+  height: auto;              /* maintain aspect ratio */
+  border: 1px solid #ddd;    /* light border */
+  border-radius: 4px;        /* subtle rounding */
+  padding: 2px;
+  object-fit: cover;         /* fills container without distortion */
+}
+
+.upload-view-container{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width:300px;
+  height:200px;
+  border-radius:8px;
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  max-width: 600px;
+  margin: 0 auto;
+  margin-bottom:20px;
+}
+
+.upload-container {
+  display: flex;
+  justify-self: center;
+  justify-content: space-between;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  width: 60%;
+  max-width: 400px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.upload-container input[type="file"] {
+  margin-right: 0.5rem;
+}
+
+.gallery-table {
+  border-radius: 8px;
+  border-collapse: collapse;
+  width: 90%;
+  max-width: 800px;
+  margin: 0 auto 1rem; /* center with downward spacing */
+  background: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.gallery-table th,
+.gallery-table td {
+  padding: 0.75rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+
+.gallery-table thead {
+  background-color: #f0f0f0;
+}
+
+.gallery-table tbody tr:hover {
+  background-color: #f5faff;
+}
+
+.gallery-table img {
+  height: 80px;
+  width: auto;
+  border-radius: 4px;
+}
+
+.pagination {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.pagination button {
+  margin: 0 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #888;
+  background-color: #fff;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: #eee;
+}
+
+.pagination button:disabled {
+  cursor: default;
+  color: #aaa;
+  border-color: #ccc;
+}

@@ -1,0 +1,74 @@
+<h2 class="header-container">Akwasi's Images Gallery</h2>
+
+<!-- Upload control -->
+<div class="upload-container">
+  <input type="file" accept="image/*" (change)="onFile($event)" />
+  <button (click)="upload()" [disabled]="loading || !selectedFile">
+    Upload
+  </button>
+</div>
+
+<div class="upload-view-container">
+  @if(displayImageUrl){
+    <div class="preview">
+        <h3>Selected Image</h3>
+        <img [src]="displayImageUrl" alt="Selected" />
+    </div>
+  }
+</div>
+
+
+@if(uploadedUrl){
+    <p>✅ Uploaded: <a [href]="uploadedUrl" target="_blank">{{uploadedUrl}}</a></p>
+}
+
+@if(error){
+    <p style="color:red;">❌ {{error}}</p>
+}
+
+<!-- Gallery table -->
+@if(images.length){
+    <table class="gallery-table">
+        <thead>
+            <tr>
+            <th>Thumbnail</th>
+            <th>Key</th>
+            <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for(img of images; track img.key) {
+                <tr>
+                    <td>
+                        <img [src]="img.url" class="thumb-img" alt="thumb" />
+                    </td>
+                    <td>{{ img.key }}</td>
+                    <td>
+                        <a href="#" (click)="viewImage(img.url); $event.preventDefault()">View</a>
+                        |
+                        <button (click)="delete(img.key)" [disabled]="loading">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<!-- No images message -->
+@if(!images.length && loading){
+    <p>Loading images...</p>
+}
+
+<!-- Pagination -->
+<div class="pagination">
+  <button (click)="back()" [disabled]="!prevTokens.length || loading">
+    ← Back
+  </button>
+  <button (click)="next()" [disabled]="!nextToken || loading">
+    Next →
+  </button>
+
+  @if(loading) {
+    <span>Loading...</span>
+  }
+</div>
+

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Test /images Endpoint</title>
+  </head>
+  <body>
+    <h2>Test: GET /images?size=5</h2>
+    <button id="testBtn">Fetch Images</button>
+    <pre id="output" style="background: #f4f4f4; padding: 1em"></pre>
+
+    <script>
+      document.getElementById("testBtn").onclick = async () => {
+        const pre = document.getElementById("output");
+        pre.textContent = "⏳ Fetching...";
+        try {
+          const resp = await fetch("http://localhost:3000/images?size=5");
+          const text = await resp.text();
+          let data;
+          try {
+            data = JSON.parse(text);
+          } catch {
+            pre.textContent = "❌ Invalid JSON:\n" + text;
+            return;
+          }
+          pre.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          pre.textContent = "❌ Error:\n" + err;
+        }
+      };
+    </script>
+  </body>
+</html>

@@ -1,8 +1,20 @@
 // server.js
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const { ensureBucket, createUploader } = require('./services/image-upload');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const {S3Client,
+  ListObjectsV2Command,
+  DeleteObjectCommand,
+} = require("@aws-sdk/client-s3");
+const { ensureBucket, createUploader } = require("./services/image-upload");
+
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  }
+});
 
 const app = express();
 app.use(cors());
@@ -17,22 +29,63 @@ const upload = createUploader(BUCKET);
 // Ensure bucket exists before starting server
 ensureBucket(BUCKET)
   .then(() => {
-    app.post('/upload',  upload, (req, res) => {
+    //Upload endpoint
+    app.post("/upload", upload, (req, res) => {
       res.json({ url: req.s3Url });
     });
 
+    // 1. GET /images?size=5&token=...
+    app.get("/images", async (req, res, next) => {
+      try {
+        const size = parseInt(req.query.size) || 5;
+        const token = req.query.token;
+
+        const cmd = new ListObjectsV2Command({
+          Bucket: BUCKET,
+          Prefix: "uploads/",
+          MaxKeys: size,
+          ContinuationToken: token,
+        });
+        const data = await s3Client.send(cmd);
+
+        const images = (data.Contents || []).map((item) => ({
+          key: item.Key,
+          url: `https://${BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${item.Key}`,
+        }));
+
+        res.json({
+          images,
+          nextToken: data.IsTruncated ? data.NextContinuationToken : undefined,
+        });
+      } catch (err) {
+        next(err);
+      }
+    });
+
+    // 2. DELETE /images/:key
+    app.delete("/images/:key", async (req, res, next) => {
+      try {
+        const key = decodeURIComponent(req.params.key);
+        const cmd = new DeleteObjectCommand({ Bucket: BUCKET, Key: key });
+        await s3Client.send(cmd);
+        res.status(204).end();
+      } catch (err) {
+        next(err);
+      }
+    });
+
+    // Error handler (must come after all routes)
     app.use((err, _req, res, _next) => {
-      console.error('❌ Upload error:', err.message);
+      console.error("❌ Upload error:", err.message);
       res.status(500).json({ error: err.message });
     });
 
+    // Start listening
     app.listen(PORT, () => {
       console.log(`🚀 Backend running at http://localhost:${PORT}`);
     });
   })
   .catch((err) => {
-    console.error('❌ Failed to setup bucket:', err.message);
+    console.error("❌ Failed to setup bucket:", err.message);
     process.exit(1);
   });
-
-
