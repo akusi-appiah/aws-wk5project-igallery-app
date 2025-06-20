@@ -1,11 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom  } from 'rxjs';
-
-export interface ImageListResponse {
-  images: { key: string; url: string }[];
-  nextToken?: string;
-}
+import { ImageListResponse } from '../types/image.types';
 
 @Injectable({
   providedIn: 'root'

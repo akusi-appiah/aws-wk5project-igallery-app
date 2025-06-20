@@ -7,6 +7,4 @@ import { GalleryComponent } from './pages/gallery/gallery.component';
   imports: [GalleryComponent],
   template: '<app-gallery></app-gallery>',
 })
-export class AppComponent {
-  title = 'frontend';
-}
+export class AppComponent {}

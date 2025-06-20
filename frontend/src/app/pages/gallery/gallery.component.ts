@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { ImageService, ImageListResponse } from '../../services/image.service';
+import { Component, computed, ElementRef, OnInit, signal, viewChild } from '@angular/core';
+import { ImageService } from '../../services/image.service';
 import { CommonModule } from '@angular/common';
-import { image } from '../../types/image.types';
+import { image, ImageListResponse } from '../../types/image.types';
 
 @Component({
   selector: 'app-gallery',
@@ -13,15 +13,17 @@ import { image } from '../../types/image.types';
 
 
 export class GalleryComponent implements OnInit {
-  images: image[] = [];
+  images=signal<image[]>([]); 
   nextToken?: string;
   prevTokens: string[] = [];
   loading = false;
   error = '';
-  selectedFile?: File;
+  selectedFile=signal<File | undefined>(undefined);
   uploadedUrl = '';
   displayImageUrl: string | null = null;
   selectedImageUrl: string  = '';
+
+  galleryForm = viewChild<ElementRef<HTMLFormElement>>('fileForm');
 
 
   constructor(private readonly imageService: ImageService) {}
@@ -42,8 +44,10 @@ export class GalleryComponent implements OnInit {
         this.prevTokens = [];
       }
       const resp: ImageListResponse = await this.imageService.listImages(token);
-      this.images = resp.images;
+      this.images.set(resp.images);
       this.nextToken = resp.nextToken;
+      this.clearImageDescription();
+      this.resetInputForm(); // Reset form after loading images
     } catch (err: any) {
       this.error = err.message ?? 'Failed to load images';
     } finally {
@@ -61,12 +65,15 @@ export class GalleryComponent implements OnInit {
     this.loadPage(prev);
   }
 
+  showPreviewWindow = computed(()=>this.images().length || !this.images().length && this.selectedFile());
+
   // File selection
   onFile(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
-      this.selectedFile = input.files[0];
-      this.selectedImageUrl=this.selectedFile.webkitRelativePath
+      this.selectedFile.set(input.files[0]);
+      this.selectedImageUrl= URL.createObjectURL(this.selectedFile()!);
+      this.displayImageUrl = this.selectedImageUrl; // Show selected image
     }
   }
 
@@ -76,10 +83,10 @@ export class GalleryComponent implements OnInit {
     this.loading = true;
     this.error = '';
     try {
-      this.uploadedUrl = await this.imageService.uploadImage(this.selectedFile);
-      this.selectedFile = undefined;
+      this.uploadedUrl = await this.imageService.uploadImage(this.selectedFile()!);
+      this.selectedFile.set(undefined) ;
       // after upload, reload first page
-      this.displayImageUrl = this.uploadedUrl;
+      this.selectedImageUrl = this.uploadedUrl.substring(8); // Remove 'upload/'
       this.loadPage();
     } catch (err: any) {
       this.error = err.message ?? 'Upload failed';
@@ -94,6 +101,7 @@ export class GalleryComponent implements OnInit {
     this.loading = true;
     try {
       await this.imageService.deleteImage(key);
+      this.clearImageDescription();
       this.loadPage();  // refresh
     } catch (err: any) {
       this.error = err.message ?? 'Delete failed';
@@ -110,6 +118,14 @@ export class GalleryComponent implements OnInit {
   clearImageDescription() {
     this.displayImageUrl = null;
     this.selectedImageUrl = "";
+    this.uploadedUrl = '';
+  }
+
+  resetInputForm() {
+    this.galleryForm()?.nativeElement.reset();
+    this.selectedFile.set(undefined);
+    this.displayImageUrl = null;
+    this.selectedImageUrl = '';
   }
 }
 

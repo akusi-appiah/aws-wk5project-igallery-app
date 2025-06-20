@@ -2,39 +2,38 @@
 
 <!-- Upload control -->
 <div class="upload-container">
-  <input type="file" accept="image/*" (change)="onFile($event)"/>
-  <button (click)="upload()" [disabled]="loading || !selectedFile">
+  <form #fileForm>
+    <input type="file" accept="image/*" (change)="onFile($event)"/>
+  </form>
+  <button (click)="upload()" [disabled]="loading || !selectedFile()">
     Upload
   </button>
 </div>
 
-<div class="upload-view-container">
-  @if(displayImageUrl){
-    <div class="preview">
-        <img [src]="displayImageUrl" class="preview-img" alt="Selected" />
-    </div>
-  }
-</div>
+@if(showPreviewWindow()){
+  <div class="upload-view-container">
+    @if(displayImageUrl){
+      <div class="preview">
+          <img [src]="displayImageUrl" class="preview-img" alt="Selected" />
+      </div>
+    }
+  </div>
+}
 <div class="display-description">
     @if (displayImageUrl) {
         <div class="display-img-container">
-            <span>viewing:  {{selectedImageUrl}}</span>
-            <button (click)="displayImageUrl = ''">❌</button>
-        </div>
+            <span>viewing :{{selectedFile() ? 'Uploaded Image - ':"Selected Image - " }} {{selectedImageUrl}}</span>
+            <button (click)="resetInputForm()">❌</button>
+        </div> 
     }
 </div>
-
-
-@if(uploadedUrl){
-    <p>✅ Uploaded: <a [href]="uploadedUrl" target="_blank">{{uploadedUrl}}</a></p>
-}
 
 @if(error){
     <p style="color:red;">❌ {{error}}</p>
 }
 
 <!-- Gallery table -->
-@if(images.length){
+@if(images().length){
     <table class="gallery-table">
         <thead>
             <tr>
@@ -44,7 +43,7 @@
             </tr>
         </thead>
         <tbody>
-            @for(img of images; track img.key) {
+            @for(img of images(); track img.key) {
                 <tr>
                     <td>
                         <img [src]="img.url" alt="thumb" />
@@ -59,10 +58,6 @@
             }
         </tbody>
     </table>
-}
-<!-- No images message -->
-@if(!images.length && loading){
-    <p>Loading images...</p>
 }
 
 <!-- Pagination -->
