@@ -1,4 +1,4 @@
-<h2 class="header-container">Akwasi's Images Gallery</h2>
+<h2 class="header-container"> Images Gallery</h2>
 
 <!-- Upload control -->
 <div class="upload-container">
@@ -37,8 +37,8 @@
     <table class="gallery-table">
         <thead>
             <tr>
-            <th>Thumbnail</th>
-            <th>Key</th>
+            <th>Image</th>
+            <th>File Name</th>
             <th>Actions</th>
             </tr>
         </thead>
@@ -48,7 +48,7 @@
                     <td>
                         <img [src]="img.url" alt="thumb" />
                     </td>
-                    <td>{{ img.key }}</td>
+                    <td>{{ img.key.substring(8) }}</td>
                     <td>
                         <a href="#" (click)="viewImage(img); $event.preventDefault()">View</a>
                         |
