@@ -1,12 +1,12 @@
 // server.js
 require("dotenv").config();
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const { GetObjectCommand } = require('@aws-sdk/client-s3');
 const express = require("express");
 const cors = require("cors");
 const {S3Client,
   ListObjectsV2Command,
   DeleteObjectCommand,
+  GetObjectCommand
 } = require("@aws-sdk/client-s3");
 const { ensureBucket, createUploader } = require("./services/image-upload");
 
