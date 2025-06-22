@@ -14,7 +14,7 @@ RUN npm install
 COPY backend/ ./
 
 # Copy the built frontend files into the backend's static directory
-COPY --from=frontend-build /app/frontend/dist/igallery-app /app/backend/public
+COPY --from=frontend-build /app/frontend/dist/frontend/. /app/backend/public/
 
 # Expose the backend port (assuming 3000, adjust if different)
 EXPOSE 3000

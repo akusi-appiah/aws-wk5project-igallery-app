@@ -10,6 +10,9 @@ const {S3Client,
 } = require("@aws-sdk/client-s3");
 const { ensureBucket, createUploader } = require("./services/image-upload");
 
+// Add path module
+const path = require('path');
+
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
   credentials: {
@@ -21,6 +24,9 @@ const s3Client = new S3Client({
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from "public"
+app.use(express.static('public'));
 
 const BUCKET = process.env.S3_BUCKET;
 const PORT = process.env.PORT || 3000;
@@ -78,6 +84,11 @@ ensureBucket(BUCKET)
       } catch (err) {
         next(err);
       }
+    });
+
+    // Catch-all route for SPA
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, 'public', 'index.html'));
     });
 
     // Error handler (must come after all routes)
