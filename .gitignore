@@ -11,3 +11,6 @@ dist/
 .vscode/
 !.vscode/settings.json  # Optional: Keep shared settings if needed
 !.vscode/extensions.json  # Optional: Keep recommended extensions
+
+test.html
+upload.html
