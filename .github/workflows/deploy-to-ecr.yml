@@ -1,0 +1,52 @@
+name: Build and Push to ECR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1  # Replace with your region
+
+      - name: Create ECR repository if not exists
+        run: |
+          REPO="igallery-repo"  # Replace with your ECR repo name
+          aws ecr describe-repositories --repository-names $REPO --region eu-west-1 || \
+          aws ecr create-repository --repository-name $REPO --region eu-west-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Delete existing 'latest' image (if exists)
+        run: |
+          REPO="igallery-repo"  # Replace with your ECR repo name
+          TAG="latest"
+          IMAGE_DIGEST=$(aws ecr describe-images --repository-name $REPO --image-ids imageTag=$TAG --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || echo "")
+          if [ -n "$IMAGE_DIGEST" ]; then
+            echo "Deleting existing image with tag $TAG"
+            aws ecr batch-delete-image --repository-name $REPO --image-ids imageDigest=$IMAGE_DIGEST
+          else
+            echo "No existing image found with tag $TAG"
+          fi
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: igallery-repo  # Replace with your ECR repo name
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
