@@ -96,5 +96,6 @@ jobs:
           aws deploy create-deployment \
             --application-name igallery-app \
             --deployment-group-name "$DEPLOYMENT_GROUP_NAME" \
-            --revision revisionType=S3,s3Location={bucket=$ARTIFACTS_BUCKET,key=appspec.yaml,bundleType=YAML} \
-            --description "Deployment from GitHub Actions"    
+            --revision '{"revisionType": "S3", "s3Location": {"bucket": "'"$ARTIFACTS_BUCKET"'", "key": "appspec.yaml", "bundleType": "YAML"}}' \
+            --description "Deployment from GitHub Actions"
+    
