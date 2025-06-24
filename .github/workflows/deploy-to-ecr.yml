@@ -66,7 +66,7 @@ jobs:
 
       - name: Update task definition with new image
         run: |
-          jq --arg newimage "$NEW_IMAGE" '.containerDefinitions[0].image = $newimage | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities)' taskdef.json > updated_taskdef.json
+          jq --arg newimage "$NEW_IMAGE" '.containerDefinitions[0].image = $newimage | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .deregisteredAt, .registeredBy)' taskdef.json > updated_taskdef.json
 
       - name: Register new task definition
         run: |
