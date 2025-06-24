@@ -93,9 +93,16 @@ jobs:
 
       - name: Create CodeDeploy deployment
         run: |
-          aws deploy create-deployment \
-            --application-name igallery-app \
-            --deployment-group-name "$DEPLOYMENT_GROUP_NAME" \
-            --revision '{"revisionType": "S3", "s3Location": {"bucket": "'"$ARTIFACTS_BUCKET"'", "key": "appspec.yaml", "bundleType": "YAML"}}' \
-            --description "Deployment from GitHub Actions"
+            # Create revision.json with the JSON content
+            echo '{"revisionType": "S3", "s3Location": {"bucket": "'"$ARTIFACTS_BUCKET"'", "key": "appspec.yaml", "bundleType": "YAML"}}' > revision.json
+            
+            # Verify the JSON content (optional, for debugging)
+            cat revision.json
+            
+            # Run the deployment command using the file
+            aws deploy create-deployment \
+              --application-name igallery-app \
+              --deployment-group-name "$DEPLOYMENT_GROUP_NAME" \
+              --revision file://revision.json \
+              --description "Deployment from GitHub Actions"
     
