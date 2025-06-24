@@ -17,11 +17,11 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-1  # Replace with your region
+          aws-region: eu-west-1  
 
       - name: Create ECR repository if not exists
         run: |
-          REPO="igallery-repo"  # Replace with your ECR repo name
+          REPO="igallery-repo" 
           aws ecr describe-repositories --repository-names $REPO --region eu-west-1 || \
           aws ecr create-repository --repository-name $REPO --region eu-west-1
 
@@ -31,7 +31,7 @@ jobs:
 
       - name: Delete existing 'latest' image (if exists)
         run: |
-          REPO="igallery-repo"  # Replace with your ECR repo name
+          REPO="igallery-repo"  
           TAG="latest"
           IMAGE_DIGEST=$(aws ecr describe-images --repository-name $REPO --image-ids imageTag=$TAG --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || echo "")
           if [ -n "$IMAGE_DIGEST" ]; then
@@ -44,9 +44,57 @@ jobs:
       - name: Build and push Docker image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: igallery-repo  # Replace with your ECR repo name
+          ECR_REPOSITORY: igallery-repo 
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "NEW_IMAGE=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Get CloudFormation outputs
+        run: |
+          STACK_NAME="igallery-infra"
+          ARTIFACTS_BUCKET=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='ArtifactsBucketName'].OutputValue" --output text)
+          DEPLOYMENT_GROUP_NAME=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='DeploymentGroupName'].OutputValue" --output text)
+          echo "ARTIFACTS_BUCKET=$ARTIFACTS_BUCKET" >> $GITHUB_ENV
+          echo "DEPLOYMENT_GROUP_NAME=$DEPLOYMENT_GROUP_NAME" >> $GITHUB_ENV
+
+      - name: Get current task definition
+        run: |
+          aws ecs describe-task-definition --task-definition igallery-app --query 'taskDefinition' > taskdef.json
+
+      - name: Update task definition with new image
+        run: |
+          jq --arg newimage "$NEW_IMAGE" '.containerDefinitions[0].image = $newimage | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities)' taskdef.json > updated_taskdef.json
+
+      - name: Register new task definition
+        run: |
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://updated_taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "NEW_TASK_DEF_ARN=$NEW_TASK_DEF_ARN" >> $GITHUB_ENV 
+
+      - name: Generate appspec.yaml
+        run: |
+          cat <<EOF > appspec.yaml
+          version: 0.0
+          Resources:
+            - TargetService:
+                Type: AWS::ECS::Service
+                Properties:
+                  TaskDefinition: "$NEW_TASK_DEF_ARN"
+                  LoadBalancerInfo:
+                    ContainerName: "igallery-app"
+                    ContainerPort: 80
+          EOF
+
+      - name: Upload appspec.yaml to S3
+        run: |
+          aws s3 cp appspec.yaml s3://$ARTIFACTS_BUCKET/appspec.yaml
+
+      - name: Create CodeDeploy deployment
+        run: |
+          aws deploy create-deployment \
+            --application-name igallery-app \
+            --deployment-group-name "$DEPLOYMENT_GROUP_NAME" \
+            --revision revisionType=S3,s3Location={bucket=$ARTIFACTS_BUCKET,key=appspec.yaml,bundleType=YAML} \
+            --description "Deployment from GitHub Actions"    
