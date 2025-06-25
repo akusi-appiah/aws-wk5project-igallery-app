@@ -84,7 +84,7 @@ jobs:
                   TaskDefinition: "$NEW_TASK_DEF_ARN"
                   LoadBalancerInfo:
                     ContainerName: "igallery-app"
-                    ContainerPort: 80
+                    ContainerPort: 3000
           EOF
 
       - name: Upload appspec.yaml to S3
