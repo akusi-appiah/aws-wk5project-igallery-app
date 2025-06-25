@@ -15,10 +15,12 @@ const path = require('path');
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
-  // credentials: {
-  //   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  //   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  // }
+  credentials: process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+    ? {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      }
+    : undefined // Let AWS SDK fall back to IAM roles in cloud
 });
 
 const app = express();
@@ -30,6 +32,12 @@ app.use(express.static('public'));
 
 const BUCKET = process.env.S3_BUCKET;
 const PORT = process.env.PORT || 3000;
+
+// Validate environment variables
+if (!process.env.AWS_REGION || !BUCKET) {
+  console.error("❌ Missing required environment variables: AWS_REGION and S3_BUCKET must be set");
+  process.exit(1);
+}
 
 // Log environment variables for debugging
 console.log(`Initializing S3 client with region: ${process.env.AWS_REGION}, bucket: ${BUCKET}`);
@@ -85,7 +93,6 @@ ensureBucket(BUCKET)
           nextToken: data.IsTruncated ? data.NextContinuationToken : undefined,
         });
       } catch (err) {
-        // console.error(`❌ Failed to setup bucket ${BUCKET}:`, err.message, err.stack);
         console.error(`❌ Error in loading from /images endpoint:`, err);
         next(err);
       }
@@ -109,10 +116,10 @@ ensureBucket(BUCKET)
     });
 
     // Catch-all route for SPA
-    app.get('/:path*', (req, res) => {
-      console.log(`Serving SPA index.html for path: ${req.path}`);
-      res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    });
+    // app.get("*:", (req, res) => {
+    //   console.log(`Serving SPA index.html for path: ${req.path}`);
+    //   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    // });
 
     // Error handler (must come after all routes)
     app.use((err, _req, res, _next) => {

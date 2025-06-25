@@ -12,10 +12,10 @@ const stream = require('stream');
 // 1. Create S3 client
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
-  // credentials: {
-  //   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  //   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-  // }
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  }
 });
 
 // 2. Ensure the S3 bucket exists

@@ -4,25 +4,30 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ ./
-# RUN npx ng build --configuration production  # Produces static files in dist/
-RUN npm run build --prod      # Produces static files in dist/
+RUN npm run build -- --configuration=production 
 
 
 # Stage 2: Set up the backend (Node.js)
-FROM node:18
+FROM node:18-slim
 WORKDIR /app/backend
 COPY backend/package*.json ./
 RUN npm install
-COPY backend/ ./
+COPY backend/ ./backend
 
 # Copy the built frontend files into the backend's static directory
-COPY --from=frontend-build /app/frontend/dist/frontend/. /app/backend/public/
+COPY --from=frontend-build /app/frontend/dist/frontend/browser /app/backend/public
 
-# Expose the backend port (assuming 3000, adjust if different)
+# Expose the backend port 
 EXPOSE 3000
 
+
+# Environment variables (default values, can be overridden)
+ENV PORT=3000
+ENV NODE_ENV=production
+
 # Start the backend server
-CMD ["node", "server.js"]
+CMD ["node", "backend/server.js"]
+
 
 
 # FROM nginx:alpine
