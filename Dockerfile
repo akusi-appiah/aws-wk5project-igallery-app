@@ -27,8 +27,3 @@ ENV NODE_ENV=production
 
 # Start the backend server
 CMD ["node", "backend/server.js"]
-
-
-
-# FROM nginx:alpine
-# COPY index.html /usr/share/nginx/html/index.html
