@@ -29,7 +29,7 @@ export class GalleryComponent implements OnInit {
   constructor(private readonly imageService: ImageService) {}
 
   ngOnInit() {
-    this.loadPage();
+    // this.loadPage();
   }
 
   // Load images (first page or with token)

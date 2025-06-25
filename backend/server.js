@@ -109,7 +109,7 @@ ensureBucket(BUCKET)
     });
 
     // Catch-all route for SPA
-    app.get('*', (req, res) => {
+    app.get('/:path*', (req, res) => {
       console.log(`Serving SPA index.html for path: ${req.path}`);
       res.sendFile(path.join(__dirname, 'public', 'index.html'));
     });
