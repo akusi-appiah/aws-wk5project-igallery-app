@@ -64,6 +64,11 @@ ensureBucket(BUCKET)
         const data = await s3Client.send(cmd);
         console.log(`Retrieved ${data.Contents?.length || 0} objects from S3`);
 
+        if (!data.Contents?.length) {
+          console.log(`'No objects found in uploads/ folder', returning empty array for ${BUCKET}`);
+          return res.json({ images: [], nextToken: undefined });
+        }
+
         // Generate signed URLs for each image
         const images = await Promise.all(
           (data.Contents || []).map(async item => {
@@ -80,7 +85,8 @@ ensureBucket(BUCKET)
           nextToken: data.IsTruncated ? data.NextContinuationToken : undefined,
         });
       } catch (err) {
-        console.error(`❌ Failed to setup bucket ${BUCKET}:`, err.message, err.stack);
+        // console.error(`❌ Failed to setup bucket ${BUCKET}:`, err.message, err.stack);
+        console.error(`❌ Error in loading from /images endpoint:`, err);
         next(err);
       }
     });
@@ -120,6 +126,6 @@ ensureBucket(BUCKET)
     });
   })
   .catch((err) => {
-    console.error("❌ Failed to setup bucket:", err.message);
+    console.error("❌ Failed to setup bucket Main Error:", err);
     process.exit(1);
   });
