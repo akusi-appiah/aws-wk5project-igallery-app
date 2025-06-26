@@ -27,16 +27,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// // Serve frontend config
-// app.get('/config.js', (req, res) => {
-//   res.set('Content-Type', 'application/javascript');
-//   res.send(`
-//     window.APP_CONFIG = {
-//       API_BASE_URL: '${process.env.FRONTEND_API_BASE_URL}'
-//     };
-//   `);
-// });
-
 // Serve static files from "public"
 app.use(express.static('public'));
 
@@ -66,7 +56,7 @@ ensureBucket(BUCKET)
       res.json({ url: req.s3Url });
     });
 
-    // 1. GET /images?size=5&token=...
+    // 1. GET /images?size=3&token=...
     app.get("/images", async (req, res, next) => {
       try {
         const size = parseInt(req.query.size) || 3; // Default to 3 if not provided
@@ -126,10 +116,10 @@ ensureBucket(BUCKET)
     });
 
     // Catch-all route for SPA
-    // app.get("*:", (req, res) => {
-    //   console.log(`Serving SPA index.html for path: ${req.path}`);
-    //   res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    // });
+    app.get(/^(?!\/api|\/upload|\/images|\/config\.js).*/, (req, res) => {
+      console.log(`Serving SPA index.html for path: ${req.path}`);
+      res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    });
 
     // Error handler (must come after all routes)
     app.use((err, _req, res, _next) => {
