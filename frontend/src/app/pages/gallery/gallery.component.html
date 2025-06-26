@@ -33,7 +33,7 @@
 }
 
 <!-- Gallery table -->
-@if(images().length){
+@if(imageList().length){
     <table class="gallery-table">
         <thead>
             <tr>
@@ -43,7 +43,7 @@
             </tr>
         </thead>
         <tbody>
-            @for(img of images(); track img.key) {
+            @for(img of imageList(); track img.key) {
                 <tr>
                     <td>
                         <img [src]="img.url" alt="thumb" />
@@ -62,7 +62,7 @@
 
 <!-- Pagination -->
 <div class="pagination">
-  <button (click)="back()" [disabled]="!prevTokens.length || loading">
+  <button (click)="back()" [disabled]="prevTokens.length==0 || loading">
     ← Back
   </button>
   <button (click)="next()" [disabled]="!nextToken || loading">

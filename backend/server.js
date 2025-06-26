@@ -27,15 +27,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend config
-app.get('/config.js', (req, res) => {
-  res.set('Content-Type', 'application/javascript');
-  res.send(`
-    window.APP_CONFIG = {
-      API_BASE_URL: '${process.env.FRONTEND_API_BASE_URL}'
-    };
-  `);
-});
+// // Serve frontend config
+// app.get('/config.js', (req, res) => {
+//   res.set('Content-Type', 'application/javascript');
+//   res.send(`
+//     window.APP_CONFIG = {
+//       API_BASE_URL: '${process.env.FRONTEND_API_BASE_URL}'
+//     };
+//   `);
+// });
 
 // Serve static files from "public"
 app.use(express.static('public'));
@@ -69,7 +69,7 @@ ensureBucket(BUCKET)
     // 1. GET /images?size=5&token=...
     app.get("/images", async (req, res, next) => {
       try {
-        const size = parseInt(req.query.size) || 5;
+        const size = parseInt(req.query.size) || 3; // Default to 3 if not provided
         const token = req.query.token;
         console.log(`Fetching images from bucket: ${BUCKET}, size: ${size}, token: ${token || 'none'}`);
 

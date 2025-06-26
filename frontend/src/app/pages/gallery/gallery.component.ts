@@ -1,7 +1,7 @@
 import { Component, computed, ElementRef, OnInit, signal, viewChild } from '@angular/core';
 import { ImageService } from '../../services/image.service';
 import { CommonModule } from '@angular/common';
-import { image, ImageListResponse } from '../../types/image.types';
+import { image } from '../../types/image.types';
 
 @Component({
   selector: 'app-gallery',
@@ -13,15 +13,16 @@ import { image, ImageListResponse } from '../../types/image.types';
 
 
 export class GalleryComponent implements OnInit {
-  images=signal<image[]>([]); 
-  nextToken?: string;
-  prevTokens: string[] = [];
+  imageList=signal<image[]>([]); 
+  nextToken: string|null = null; // Token for next page
+  prevTokens: (string|null)[] = [];
+  currentToken: string| null = null; // Current token for back navigation
+
   loading = false;
-  error = '';
+  error:string| null = null;
   selectedFile=signal<File | undefined>(undefined);
-  uploadedUrl = '';
   displayImageUrl: string | null = null;
-  selectedImageUrl: string  = '';
+  selectedImageUrl: string| null  = null; // URL for selected image
 
   galleryForm = viewChild<ElementRef<HTMLFormElement>>('fileForm');
 
@@ -29,43 +30,56 @@ export class GalleryComponent implements OnInit {
   constructor(private readonly imageService: ImageService) {}
 
   ngOnInit() {
-    this.loadPage();
+    this.loadImages();
   }
 
   // Load images (first page or with token)
-  async loadPage(token?: string) {
+  loadImages(token:string | null = null, fallback = true) {
     this.loading = true;
-    this.error = '';
-    try {
-      // track prev tokens for “Back”
-      if (token && this.nextToken) {
-        this.prevTokens.push(this.nextToken);
-      } else if (!token) {
-        this.prevTokens = [];
+    this.imageService.listImages(token ?? undefined).subscribe({
+      next: (res) => {
+        const images = res.images || [];
+        this.nextToken = res.nextToken ?? null;
+        this.currentToken = token;
+        this.clearImageDescription();
+        this.resetInputForm(); // Reset form after loading images
+        this.loading = false;
+
+        // Fallback if page is empty and it's not the first page
+        if (images.length === 0 && fallback && this.prevTokens.length > 0) {
+          const prevToken = this.prevTokens.pop()!;
+          this.loadImages(prevToken, false); // 👈 Don't fallback again
+          return;
+        }
+
+        this.imageList.set(images); // Update image list
+      },
+      error: (err) => {
+        this.error = 'Failed to load images';
+        this.loading = false;
+        console.error(err);
       }
-      const resp: ImageListResponse = await this.imageService.listImages(token);
-      this.images.set(resp.images);
-      this.nextToken = resp.nextToken;
-      this.clearImageDescription();
-      this.resetInputForm(); // Reset form after loading images
-    } catch (err: any) {
-      this.error = err.message ?? 'Failed to load images';
-    } finally {
-      this.loading = false;
-    }
+    });
   }
 
   // Go forward
   next() {
-    if (this.nextToken) this.loadPage(this.nextToken);
-  }
-  // Go back
-  back() {
-    const prev = this.prevTokens.pop();
-    this.loadPage(prev);
+    if (this.nextToken) {
+      console.log('Next token:', this.nextToken);
+      this.prevTokens.push(this.currentToken); // ✅ Track where we came from
+      this.loadImages(this.nextToken);
+    }
   }
 
-  showPreviewWindow = computed(()=>this.images().length || !this.images().length && this.selectedFile());
+  // Go back
+  back() {
+    if (this.prevTokens.length === 0) return; // No previous tokens
+    console.log('Previous tokens:', this.prevTokens);
+    const prev = this.prevTokens.pop(); // Get last token
+    this.loadImages(prev);  
+  }
+
+  showPreviewWindow = computed(()=>this.imageList().length || !this.imageList().length && this.selectedFile());
 
   // File selection
   onFile(event: Event) {
@@ -78,36 +92,40 @@ export class GalleryComponent implements OnInit {
   }
 
   // Upload then refresh
-  async upload() {
+  upload() {
     if (!this.selectedFile) return;
     this.loading = true;
-    this.error = '';
-    try {
-      this.uploadedUrl = await this.imageService.uploadImage(this.selectedFile()!);
-      this.selectedFile.set(undefined) ;
-      // after upload, reload first page
-      this.selectedImageUrl = this.uploadedUrl.substring(8); // Remove 'upload/'
-      this.loadPage();
-    } catch (err: any) {
-      this.error = err.message ?? 'Upload failed';
-    } finally {
-      this.loading = false;
-    }
+    this.imageService.uploadImage(this.selectedFile()!).subscribe({
+      next: (res) => {
+        this.selectedFile.set(undefined);
+        this.selectedImageUrl = res;
+        this.resetpaginationButtons();
+        this.loadImages(); // Reload after upload
+      },
+      error: (err) => {
+        this.error = 'Upload failed';
+        this.loading = false;
+        console.error(err);
+      }
+    });
   }
 
   // Delete an image
-  async delete(key: string) {
+  delete(key: string) {
     if (!confirm('Delete this image?')) return;
     this.loading = true;
-    try {
-      await this.imageService.deleteImage(key);
-      this.clearImageDescription();
-      this.loadPage();  // refresh
-    } catch (err: any) {
-      this.error = err.message ?? 'Delete failed';
-    } finally {
-      this.loading = false;
-    }
+
+    this.imageService.deleteImage(key).subscribe({
+      next: () => {
+        this.clearImageDescription();
+        this.loadImages(this.currentToken); // Reload current page
+      },
+      error: (err) => {
+        this.error = 'Delete failed';
+        this.loading = false;
+        console.error(err);
+      }
+    });
   }
 
   viewImage(url:image) {
@@ -118,7 +136,12 @@ export class GalleryComponent implements OnInit {
   clearImageDescription() {
     this.displayImageUrl = null;
     this.selectedImageUrl = "";
-    this.uploadedUrl = '';
+  }
+
+  resetpaginationButtons(){
+    this.nextToken = null;
+    this.prevTokens = [];
+    this.currentToken = null;
   }
 
   resetInputForm() {
