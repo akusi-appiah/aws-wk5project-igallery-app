@@ -9,9 +9,16 @@ import { ImageListResponse } from '../types/image.types';
 
 
 export class ImageService {
-  private readonly baseUrl = 'http://localhost:3000';
-
   constructor(private readonly http: HttpClient) {}
+  private readonly baseUrl = this.getBaseUrl();
+
+  private getBaseUrl(): string {
+    // Use relative path in production, localhost in development
+    return window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000' 
+      : '';
+  }
+
   /**
    * Uploads an image file to the server.
    * @param file The image file to upload.

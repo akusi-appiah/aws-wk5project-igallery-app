@@ -27,6 +27,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Serve frontend config
+app.get('/config.js', (req, res) => {
+  res.set('Content-Type', 'application/javascript');
+  res.send(`
+    window.APP_CONFIG = {
+      API_BASE_URL: '${process.env.FRONTEND_API_BASE_URL}'
+    };
+  `);
+});
+
 // Serve static files from "public"
 app.use(express.static('public'));
 
@@ -128,7 +138,7 @@ ensureBucket(BUCKET)
     });
 
     // Start listening
-    app.listen(PORT, () => {
+    app.listen(PORT || 3000, '0.0.0.0', () => {
       console.log(`🚀 Backend running at http://localhost:${PORT}`);
     });
   })
