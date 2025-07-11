@@ -50,6 +50,12 @@ ensureBucket(BUCKET)
   .then(() => {
     console.log(`✅ Successfully verified or created bucket: ${BUCKET}`);
 
+    // 1. Health check - MUST BE FIRST ROUTE (before any middleware)
+    app.get('/health', (req, res) => {
+      console.log(`🩺 Health check received at ${new Date().toISOString()}`);
+      res.status(200).send('OK');
+    });
+
     //Upload endpoint
     app.post("/upload", upload, (req, res) => {
       console.log(`Uploaded image to: ${req.s3Url}`);

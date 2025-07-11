@@ -26,9 +26,9 @@ ENV PORT=3000
 ENV NODE_ENV=production
 
 
-# Set FRONTEND_API_BASE_URL based on environment
-ARG FRONTEND_API_BASE_URL=""
-ENV FRONTEND_API_BASE_URL=$FRONTEND_API_BASE_URL
+# # Set FRONTEND_API_BASE_URL based on environment
+# ARG FRONTEND_API_BASE_URL=""
+# ENV FRONTEND_API_BASE_URL=$FRONTEND_API_BASE_URL
 
 # Start the backend server
 CMD ["node", "backend/server.js"]
